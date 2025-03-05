@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浪漫表白</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgb(245, 216, 218);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .cat-container {
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 20px;
+            width: 300px;
+        }
+        
+        .cat-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+        }
+        
+        .question {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .yes-btn {
+            padding: 10px 20px;
+            background-color: #e4a2a8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .no-btn {
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        
+        .yes-btn:hover, .no-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .final-scene {
+            display: none;
+            text-align: center;
+        }
+        
+        .final-image {
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <audio id="backgroundMusic" loop>
+        <source src="audio/无标题视频——使用Clipchamp制作.m4a" type="audio/mp4">
+    </audio>
+
+    <audio id="clickSound">
+        <source src="audio/click.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="successSound">
+        <source src="audio/success.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="container" id="question-container">
+        <div class="cat-container">
+            <img src="images/小猫/小猫1.jpg" alt="可爱的小猫" class="cat-image" id="cat-image">
+        </div>
+        <div class="question">凌云熙你可以成为我的恋人吗？</div>
+        <div class="buttons">
+            <button class="yes-btn" id="yes-btn">可以</button>
+            <button class="no-btn" id="no-btn">不要</button>
+        </div>
+    </div>
+    
+    <div class="final-scene" id="final-scene">
+        <img src="images/浪漫场景.jpg" alt="浪漫场景" class="final-image">
+    </div>
+
+    <script>
+        const yesBtn = document.getElementById('yes-btn');
+        const noBtn = document.getElementById('no-btn');
+        const catImage = document.getElementById('cat-image');
+        const questionContainer = document.getElementById('question-container');
+        const finalScene = document.getElementById('final-scene');
+        
+        let yesBtnSize = 1;
+        let clickCount = 0;
+        
+        // 获取按钮初始位置和大小信息
+        const yesBtnRect = yesBtn.getBoundingClientRect();
+        const noBtnRect = noBtn.getBoundingClientRect();
+        const initialGap = noBtnRect.left - (yesBtnRect.right); // 两个按钮之间的初始间距
+        
+        // 图片数组（存储所有小猫表情图片的路径）
+        const catImages = [
+            'images/小猫/小猫1.jpg',
+            'images/小猫/小猫2.jpg',
+            'images/小猫/小猫3.jpg',
+            'images/小猫/小猫4.jpg',
+            'images/小猫/小猫5.jpg'
+        ];
+        
+        // 尝试自动播放音乐
+        window.addEventListener('load', () => {
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            backgroundMusic.volume = 0.5; // 设置音量
+            
+            // 尝试播放
+            const playPromise = backgroundMusic.play();
+            
+            // 处理可能的错误
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // 自动播放被阻止
+                    console.log("自动播放被阻止，等待用户交互");
+                    
+                    // 添加一次性点击事件监听器到整个文档
+                    document.addEventListener('click', function playOnFirstClick() {
+                        backgroundMusic.play();
+                        // 移除事件监听器，这样只会执行一次
+                        document.removeEventListener('click', playOnFirstClick);
+                    }, { once: true });
+                });
+            }
+        });
+        
+        noBtn.addEventListener('click', () => {
+            const clickSound = document.getElementById('clickSound');
+            clickSound.currentTime = 0; // 重置音频播放位置
+            clickSound.play();
+            
+            // 增加"可以"按钮的大小（再增加20%）
+            yesBtnSize += 0.29; // 从0.24增加到0.29（增加约20%）
+            yesBtn.style.transform = `scale(${yesBtnSize})`;
+            
+            // 计算"可以"按钮增大后的宽度
+            const newYesBtnWidth = yesBtnRect.width * yesBtnSize;
+            
+            // 计算"可以"按钮向右扩展的距离
+            const expandedDistance = newYesBtnWidth - yesBtnRect.width;
+            
+            // 只有当"可以"按钮扩展到足够大，接触到"不要"按钮时，才开始移动"不要"按钮
+            if (expandedDistance > initialGap) {
+                // 计算需要移动的距离 = 扩展距离 - 初始间距
+                const moveDistance = expandedDistance - initialGap;
+                noBtn.style.transform = `translateX(${moveDistance}px)`;
+            }
+            
+            // 当按钮变大到一定程度时，将上面的内容往上移动
+            if (yesBtnSize > 1.5) {
+                // 计算上移距离，随着按钮变大而增加
+                const upwardDistance = (yesBtnSize - 1.5) * 50; // 调整系数可以控制上移速度
+                document.querySelector('.cat-container').style.transform = `translateY(-${upwardDistance}px)`;
+                document.querySelector('.question').style.transform = `translateY(-${upwardDistance}px)`;
+            }
+            
+            // 更换小猫图片
+            clickCount++;
+            // 确保索引不超过数组最大索引
+            const imageIndex = Math.min(clickCount, catImages.length - 1);
+            catImage.src = catImages[imageIndex];
+        });
+        
+        yesBtn.addEventListener('click', () => {
+            const successSound = document.getElementById('successSound');
+            successSound.play();
+            
+            // 隐藏问题容器，显示最终场景
+            questionContainer.style.display = 'none';
+            finalScene.style.display = 'block';
+            
+            // 更改背景颜色以匹配最终场景图片
+            document.body.style.backgroundColor = 'rgb(255, 221, 222)';
+        });
+    </script>
+</body>
+</html> 
